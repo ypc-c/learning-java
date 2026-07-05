@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.score.studentscoresystem.mapper.ScoreMapper">
+    
+    <select id="selectById" resultType="Score">
+        SELECT s.*, c.course_name, c.course_code, c.credit, u.real_name as studentName, u.student_no as studentNo
+        FROM score s
+        LEFT JOIN course c ON s.course_id = c.id
+        LEFT JOIN user u ON s.student_id = u.id
+        WHERE s.id = #{id}
+    </select>
+    
+    <select id="selectByCourseAndStudent" resultType="Score">
+        SELECT * FROM score 
+        WHERE course_id = #{courseId} AND student_id = #{studentId}
+    </select>
+    
+    <select id="selectByStudentId" resultType="Score">
+        SELECT s.*, c.course_name, c.course_code, c.credit
+        FROM score s
+        LEFT JOIN course c ON s.course_id = c.id
+        WHERE s.student_id = #{studentId}
+        ORDER BY s.create_time DESC
+    </select>
+    
+    <select id="selectByCourseId" resultType="Score">
+        SELECT s.*, u.real_name as studentName, u.student_no as studentNo
+        FROM score s
+        LEFT JOIN user u ON s.student_id = u.id
+        WHERE s.course_id = #{courseId}
+        ORDER BY s.total_score DESC
+    </select>
+    
+    <select id="selectByCondition" resultType="Score">
+        SELECT s.*, u.real_name as studentName, u.student_no as studentNo
+        FROM score s
+        LEFT JOIN user u ON s.student_id = u.id
+        WHERE s.course_id = #{courseId}
+        <if test="keyword != null and keyword != ''">
+            AND (u.real_name LIKE CONCAT('%', #{keyword}, '%') OR u.student_no LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="minScore != null">
+            AND s.total_score &gt;= #{minScore}
+        </if>
+        <if test="maxScore != null">
+            AND s.total_score &lt;= #{maxScore}
+        </if>
+        ORDER BY s.total_score DESC
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO score (course_id, student_id, usual_score, midterm_score, final_score, total_score, grade_level, gpa)
+        VALUES (#{courseId}, #{studentId}, #{usualScore}, #{midtermScore}, #{finalScore}, #{totalScore}, #{gradeLevel}, #{gpa})
+    </insert>
+    
+    <update id="update">
+        UPDATE score
+        <set>
+            <if test="usualScore != null">usual_score = #{usualScore},</if>
+            <if test="midtermScore != null">midterm_score = #{midtermScore},</if>
+            <if test="finalScore != null">final_score = #{finalScore},</if>
+            <if test="totalScore != null">total_score = #{totalScore},</if>
+            <if test="gradeLevel != null">grade_level = #{gradeLevel},</if>
+            <if test="gpa != null">gpa = #{gpa},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM score WHERE id = #{id}
+    </delete>
+    
+</mapper>

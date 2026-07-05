@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.score.studentscoresystem.mapper.UserMapper">
+    
+    <select id="selectByUsername" resultType="User">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+    
+    <select id="selectById" resultType="User">
+        SELECT * FROM user WHERE id = #{id}
+    </select>
+    
+    <select id="selectByRole" resultType="User">
+        SELECT * FROM user WHERE role = #{role} AND status = 1
+    </select>
+    
+    <select id="selectByCourseId" resultType="User">
+        SELECT u.* FROM user u
+        INNER JOIN course_student cs ON u.id = cs.student_id
+        WHERE cs.course_id = #{courseId} AND u.status = 1
+    </select>
+    
+    <select id="selectByPhone" resultType="User">
+        SELECT * FROM user WHERE phone = #{phone}
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (username, password, real_name, role, phone, email, student_no, status)
+        VALUES (#{username}, #{password}, #{realName}, #{role}, #{phone}, #{email}, #{studentNo}, #{status})
+    </insert>
+    
+    <update id="update">
+        UPDATE user
+        <set>
+            <if test="password != null">password = #{password},</if>
+            <if test="realName != null">real_name = #{realName},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM user WHERE id = #{id}
+    </delete>
+    
+</mapper>

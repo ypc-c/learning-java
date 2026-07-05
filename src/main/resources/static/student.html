@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生后台</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', Arial, sans-serif; background: #f5f5f5; }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .btn:hover { opacity: 0.8; }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .gpa-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .gpa-value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .gpa-label {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .grade-excellent { color: #27ae60; font-weight: bold; }
+        .grade-good { color: #3498db; font-weight: bold; }
+        .grade-pass { color: #f39c12; font-weight: bold; }
+        .grade-fail { color: #e74c3c; font-weight: bold; }
+        .sort-controls {
+            margin-bottom: 20px;
+        }
+        .sort-controls select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>学生成绩管理系统 - 学生</h2>
+        <div>
+            <span id="userName"></span>
+            <button class="btn" onclick="logout()">退出</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="gpa-display">
+            <div class="gpa-value" id="gpaValue">0.00</div>
+            <div class="gpa-label">总绩点 (GPA)</div>
+        </div>
+
+        <div class="card">
+            <h2>我的成绩</h2>
+            <div class="sort-controls">
+                <label>排序方式：</label>
+                <select id="sortBy" onchange="loadScores()">
+                    <option value="">默认</option>
+                    <option value="totalScore">按总成绩</option>
+                    <option value="credit">按学分</option>
+                </select>
+                <select id="sortOrder" onchange="loadScores()">
+                    <option value="desc">降序</option>
+                    <option value="asc">升序</option>
+                </select>
+            </div>
+            <table id="scoresTable">
+                <thead>
+                    <tr>
+                        <th>课程编号</th>
+                        <th>课程名称</th>
+                        <th>学分</th>
+                        <th>平时成绩</th>
+                        <th>期中成绩</th>
+                        <th>期末成绩</th>
+                        <th>总成绩</th>
+                        <th>等级</th>
+                        <th>绩点</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        async function init() {
+            checkAuth('STUDENT');
+            const user = JSON.parse(localStorage.getItem('user'));
+            document.getElementById('userName').textContent = user.realName;
+            await loadScores();
+        }
+
+        async function loadScores() {
+            const sortBy = document.getElementById('sortBy').value;
+            const order = document.getElementById('sortOrder').value;
+            
+            let url = '/score/my-scores';
+            if (sortBy) {
+                url += `?sortBy=${sortBy}&order=${order}`;
+            }
+            
+            const data = await apiGet(url);
+            document.getElementById('gpaValue').textContent = data.totalGPA || '0.00';
+            renderScores(data.scores);
+        }
+
+        function renderScores(scores) {
+            const tbody = document.querySelector('#scoresTable tbody');
+            if (scores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">暂无成绩</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = scores.map(s => {
+                let gradeClass = '';
+                if (s.gradeLevel === '优秀') gradeClass = 'grade-excellent';
+                else if (s.gradeLevel === '良好') gradeClass = 'grade-good';
+                else if (s.gradeLevel === '及格') gradeClass = 'grade-pass';
+                else if (s.gradeLevel === '不及格') gradeClass = 'grade-fail';
+                
+                return `
+                    <tr>
+                        <td>${s.courseCode}</td>
+                        <td>${s.courseName}</td>
+                        <td>${s.credit}</td>
+                        <td>${s.usualScore || '-'}</td>
+                        <td>${s.midtermScore || '-'}</td>
+                        <td>${s.finalScore || '-'}</td>
+                        <td><strong>${s.totalScore || '-'}</strong></td>
+                        <td class="${gradeClass}">${s.gradeLevel || '-'}</td>
+                        <td>${s.gpa || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
