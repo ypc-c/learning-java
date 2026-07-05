@@ -1,0 +1,50 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: notice-service
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/library_notice?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+    stream:
+      bindings:
+        input:
+          destination: overdue-exchange
+          content-type: application/json
+          group: notice-group
+          binder: rabbit
+      rabbit:
+        bindings:
+          input:
+            consumer:
+              exchange-type: topic
+              binding-routing-key: overdue.key
+  zipkin:
+    base-url: http://127.0.0.1:9411
+  sleuth:
+    sampler:
+      probability: 1.0
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.library.common.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.library: DEBUG

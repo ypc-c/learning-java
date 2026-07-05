@@ -1,0 +1,53 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: borrow-service
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/library_borrow?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+  cloud:
+    nacos:
+      config:
+        import-check:
+          enabled: false
+    stream:
+      bindings:
+        output:
+          destination: overdue-exchange
+          content-type: application/json
+          binder: rabbit
+      rabbit:
+        bindings:
+          output:
+            producer:
+              routing-key-expression: '''overdue.key'''
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8090
+        port: 8720
+      eager: true
+  zipkin:
+    base-url: http://127.0.0.1:9411
+  sleuth:
+    sampler:
+      probability: 1.0
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.library.common.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+logging:
+  level:
+    com.library: DEBUG
